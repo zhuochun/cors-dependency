@@ -1,10 +1,10 @@
 // Author: Wang Zhuochun
-// Last Edit: 16/May/2013 07:28 PM
+// Last Edit: 02/Jun/2013 02:38 PM
 
 // ========================================
 // Require: phantomjs @ http://phantomjs.org/
 // Usage:
-//     phantomjs crawl-phantomjs.js [-o outputFilename] [-n]
+//     phantomjs crawl-phantomjs.js [-t 20] [-o outputFilename] [-n]
 // ========================================
 
 /*jshint browser:true, jquery:true, laxcomma:true, maxerr:50 */
@@ -56,7 +56,8 @@ var sem = (function(today) {
             "acad_y=" + sem.acadYear + "&sem_c=" + sem.semester +
             "&mod_c=" + modCode.toUpperCase();
     }
-  , thread = 1 
+  , thread = 29 
+  , running_thread = 0
   , output = "list.js"
   , update = true;
 
@@ -76,71 +77,86 @@ if (sys.args.length > 1) {
 // Crawl and Parse Start
 
 // modules length
-var llength = 30//list.length
+var llength = list.length
   , completed = 0;
 
 console.log("list length = " + llength);
 
 // thread variables
-var i, max = ((llength / thread) | 0) + 1;
+var increment = 1, max = ((llength / thread) | 0) + 1;
 
 console.log("thread = " + thread + ", max = " + max);
 
 // track performance start
 var timeStart = new Date();
 
-for (i = 0; i < thread; i++) {
-    var aPage = webpage.create();
-
-    aPage.onConsoleMessage = function(msg) { console.log(msg); };
-
-    visitPage(aPage, max * i, max * (i + 1));
-}
-
 // results
 var finalList = {}, duplicateList = {};
 
-function visitPage(page, idx, max) {
+createAThread();
+
+function createAThread() {
+    if (running_thread >= thread) { return ; }
+
+    var i = 0, key;
+
+    while (running_thread < thread && i < increment) {
+        key = "id" + running_thread;
+
+        finalList[key] = {};
+
+        visitPage(max * running_thread, /* index */
+                  max * (running_thread + 1), /* max */
+                  key /* key */);
+
+        running_thread++;
+        i++;
+    }
+
+    increment *= 2;
+}
+
+function visitPage(idx, max, key) {
     // exit
     if (completed >= llength) {
-        outputFile(output);
+        outputFile(finalList[key], key + ".txt");
+        outputFile(duplicateList, "duplicate.txt");
 
-        page.close();
+        finalList[key] = null;
 
         // performance stop
         var totalTime = new Date() - timeStart;
-        console.log("Spent " + (totalTime / 1000).toFixed(2) + "s using " + thread + " pages");
+        console.log("Spent " + (totalTime / 1000).toFixed(2) + "s using " + running_thread + "/" + thread + " threads");
 
         phantom.exit();
 
         return ;
     } else if (idx >= llength || idx >= max) {
-        page.close();
+        outputFile(finalList[key], key + ".txt");
+
+        finalList[key] = null;
 
         return ;
     }
 
+    // open a page
+    var page = webpage.create();
+    page.onConsoleMessage = function(msg) { console.log(msg); };
+
     // get module code from list
-    //console.log("Test List Idx = " + idx + ", Item = " + list[idx]);
+    var moduleRegex = /[a-z]{2,3}\d{4}[a-z]{0,2}/ig,
+        modules = list[idx].match( moduleRegex );
 
-    var moduleRegex = /[a-z]{2,3}\d{4}[a-z]?/ig,
-        module = moduleRegex.exec(list[idx]),
-        match;
-
-    //console.log("Module = " + JSON.stringify(module));
-
-    // handle duplicate modules
-    match = moduleRegex.exec(list[idx]);
-    while (match !== null) {
-        duplicateList[match[0]] = { referTo: module[0] };
-
-        //console.log("Match = " + JSON.stringify(match));
-
-        match = moduleRegex.exec(list[idx]);
+    if (modules.length > 1) {
+        for (var i = 1, len = modules.length; i < len; i++) {
+            duplicateList[modules[i]] = { referTo: modules[0] };
+        }
     }
 
+    completed++;
+
     // Open Each Degree Module Listings
-    page.open(encodeURI(url(module[0])), function(status) {
+    page.open(encodeURI(url(modules[0])), function(status) {
         // Check for page load success
         if (status !== "success") {
             console.log("===! Unable to access network\n");
@@ -168,51 +184,28 @@ function visitPage(page, idx, max) {
                     }
                 }
 
-                try {
-                    parse();
-                } catch (e) {
-                    parse();
-                }
+                parse();
 
                 return result;
             });
 
             // save result to finalList uniquely
-            finalList[result.code] = result;
+            finalList[key][result.code] = result;
 
-            completed++;
+            createAThread();
 
-            visitPage(page, idx + 1, max);
+            page.close();
+
+            visitPage(idx + 1, max, key);
         }
     });
 }
 
 // ouput module information
-function outputFile(output) {
-    console.log("===> Output to file [" + output + "] with " + Object.keys(finalList).length + " Modules");
+function outputFile(data, file) {
+    console.log("===> Output To [" + file + "]: " + Object.keys(data).length + " Modules");
 
-    for (var key in duplicateList) {
-        if (duplicateList.hasOwnProperty(key) && !finalList[key])
-            finalList[key] = duplicateList[key];
-    }
+    fs.write(file, JSON.stringify(data), "w");
 
-    fs.write(output, "window.moduleList = " + JSON.stringify(finalList) + ";", "w");
-
-    console.log("===> Output Completed");
-}
-
-// update global information
-function updateFile(global) {
-    console.log("===> Update global Info [" + global + "]");
-
-    var file = fs.open(global, "rw"), content = file.read();
-
-    content = content.replace(/lastUpdate\s*:\s*(\".*\")/,
-                              "lastUpdate: \"" + (new Date()) + "\"");
-
-    file.write(content);
-    file.flush();
-    file.close();
-
-    console.log("===> Update Completed");
+    console.log("===> Output Completed (" + completed + "/ " + llength + ")");
 }
