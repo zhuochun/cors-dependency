@@ -119,10 +119,10 @@ function createAThread() {
 function visitPage(idx, max, key) {
     // exit
     if (completed >= llength) {
-        outputFile(finalList[key], key + ".txt");
-        outputFile(duplicateList, "duplicate.txt");
+        //outputFile(finalList[key], key + ".txt");
+        //outputFile(duplicateList, "duplicate.txt");
 
-        finalList[key] = null;
+        outputFile(mergeList(finalList, duplicateList), "list.js");
 
         // performance stop
         var totalTime = new Date() - timeStart;
@@ -132,9 +132,8 @@ function visitPage(idx, max, key) {
 
         return ;
     } else if (idx >= llength || idx >= max) {
-        outputFile(finalList[key], key + ".txt");
-
-        finalList[key] = null;
+        //outputFile(finalList[key], key + ".txt");
+        //finalList[key] = null;
 
         return ;
     }
@@ -152,8 +151,6 @@ function visitPage(idx, max, key) {
             duplicateList[modules[i]] = { referTo: modules[0] };
         }
     }
-
-    completed++;
 
     // Open Each Degree Module Listings
     page.open(encodeURI(url(modules[0])), function(status) {
@@ -192,6 +189,8 @@ function visitPage(idx, max, key) {
             // save result to finalList uniquely
             finalList[key][result.code] = result;
 
+            completed++;
+
             createAThread();
 
             page.close();
@@ -199,6 +198,30 @@ function visitPage(idx, max, key) {
             visitPage(idx + 1, max, key);
         }
     });
+}
+
+// merge list
+function mergeList(arr, dup) {
+    var result = {}, i, j, tmp;
+
+    for (i in arr) {
+        if (arr.hasOwnProperty(i)) {
+            tmp = arr[i];
+
+            for (j in tmp) {
+                if (tmp.hasOwnProperty(j))
+                    result[j] = tmp[j];
+            }
+        }
+    }
+
+    for (i in dup) {
+        if (dup.hasOwnProperty(i) && !result[i]) {
+            result[i] = dup[i];
+        }
+    }
+
+    return result;
 }
 
 // ouput module information
