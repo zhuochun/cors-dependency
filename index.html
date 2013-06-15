@@ -1,16 +1,43 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="utf-8">
-        <title>D3 Test</title>
-    </head>
+  <head>
+    <meta charset="utf-8">
+    <title>NUS Module Dependency Graph</title>
 
-    <body>
-        <svg>
+    <style>
+      .node circle {
+        fill: #fff;
+        stroke: steelblue;
+        stroke-width: 1.5px;
+      }
 
-        </svg>
+      .node {
+        font: 10px sans-serif;
+      }
 
-        <script type="text/javascript" src="vendor/d3/d3.v3.js"></script>
-        <script type="text/javascript" src="js/test.js"></script>
-    </body>
+      .link {
+        fill: none;
+        stroke: #ccc;
+        stroke-width: 1.5px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="input">
+      <input id="code" type="text" name="code" />
+      <button id="submit">View</button>
+    </div>
+
+    <div id="detail">
+    </div>
+
+    <div id="graph">
+    </div>
+
+    <script type="text/javascript" src="vendor/d3/d3.v3.js"></script>
+    <script type="text/javascript" src="js/list.js"></script>
+    <script type="text/javascript" src="js/cluster.js"></script>
+    <script type="text/javascript" src="js/dependency.js"></script>
+  </body>
 </html> 
