@@ -52,7 +52,7 @@ var sem = (function(today) {
     })(new Date())
   , url = function(modCode) {
         // from CORS Planner sg.nus/url.js
-        return "https://sit.aces01.nus.edu.sg/cors/jsp/report/ModuleDetailedInfo.jsp?" +
+        return "https://aces01.nus.edu.sg/cors/jsp/report/ModuleDetailedInfo.jsp?" +
             "acad_y=" + sem.acadYear + "&sem_c=" + sem.semester +
             "&mod_c=" + modCode.toUpperCase();
     }
