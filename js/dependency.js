@@ -6,7 +6,7 @@ function tree(code) {
     var node = {};
 
     if (!app.raw[code]) {
-        //alert("module code [" + code + "] not found.");
+        alert("module code [" + code + "] not found in list.");
         return { name: code };
     }
 
@@ -21,20 +21,17 @@ function tree(code) {
 
     for (; i < len; i++) {
         var child = tree(dep[i]);
-
         child && node.children.push(child);
     }
 
     return node;
 }
 
-document.getElementById("submit")
-        .addEventListener("click", function() {
-            var code = document.getElementById("code").value;
+document.getElementById("submit").addEventListener("click", function() {
+    var code = document.getElementById("code").value;
+    var root = tree(code.toUpperCase());
 
-            var root = tree(code);
-
-            app.draw(root);
-        });
+    app.draw(root);
+});
 
 })(window.app || {});
