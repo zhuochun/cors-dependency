@@ -1,6 +1,23 @@
+
 (function(app) {
 
+    function displayDetail(code) {
+        var $detail = document.getElementById("detail");
+
+        if (!app.raw[code]) {
+            $detail.innerHTML = "We do not have data for module [" + code + "]";
+        } else {
+            var m = app.raw[code];
+
+            $detail.innerHTML = "Code:" + m.code + " " + m.title + "<br/>" +
+                                "Prerequisite:" + m.prerequisite + "<br/>" +
+                                "Description:" + m.description;
+        }
+    }
+
 app.draw = function(root) {
+    displayDetail(root.name);
+
     d3.select("#graph").html('');
 
     var width = 660,
@@ -46,18 +63,7 @@ app.draw = function(root) {
         .text(function(d) { return d.name; });
 
     node.on("click", function(d) {
-        var code = d.name,
-            $detail = document.getElementById("detail");
-
-        if (!app.raw[code]) {
-            $detail.innerHTML = "We do not have data for module [" + code + "]";
-        } else {
-            var m = app.raw[code];
-
-            $detail.innerHTML = m.code + " " + m.title + "<br/>" +
-                                m.prerequisite + "<br/>" +
-                                m.description;
-        }
+        displayDetail(d.name);
     });
 
     d3.select(self.frameElement).style("height", height + "px");

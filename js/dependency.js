@@ -27,11 +27,18 @@ function tree(code) {
     return node;
 }
 
-document.getElementById("submit").addEventListener("click", function() {
+function draw() {
     var code = document.getElementById("code").value;
     var root = tree(code.toUpperCase());
 
     app.draw(root);
+}
+
+document.getElementById("submit").addEventListener("click", draw);
+document.getElementById("code").addEventListener("keyup", function(e) {
+    if (e.keyCode === 13) { // enter
+        draw();
+    }
 });
 
 })(window.app || {});
